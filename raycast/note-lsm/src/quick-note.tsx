@@ -48,10 +48,10 @@ export default function QuickNote(props: LaunchProps<{ draftValues: QuickNoteDra
 
               const tags = values.tags.flatMap((tag) => {
                 const t: Tag = JSON.parse(tag);
-                return ["record", "--tag", t.tag]
+                return ["--tag", t.tag]
               });
 
-              const { stdout, stderr } = await promisify(execFile)(cmdPath, [...tags, note]);
+              const { stdout, stderr } = await promisify(execFile)(cmdPath, ["record", ...tags, note]);
               console.log({ stdout, stderr });
 
               await popToRoot();
