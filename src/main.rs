@@ -1,8 +1,13 @@
 use std::{io, path::PathBuf};
 
+use atuin_client::{
+    encryption,
+    record::{encryption::PASETO_V4, sqlite_store::SqliteStore, store::Store},
+};
+use atuin_common::record::{DecryptedData, Host, Record};
 use clap::Parser;
 use comfy_table::Table;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(clap::Parser, Debug)]
 struct Args {
@@ -52,14 +57,54 @@ enum Output {
     Json,
 }
 
-fn main() {
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
     let args = Args::parse();
+
+    let settings = atuin_client::settings::Settings::new().unwrap();
+    let sqlite_store = SqliteStore::new(&settings.record_store_path, settings.local_timeout)
+        .await
+        .unwrap();
+
+    let host_id = atuin_client::settings::Settings::host_id().expect("failed to get host_id");
+    let key = encryption::load_key(&settings).unwrap().into();
 
     let output: Box<dyn EncodeOutput> = match args.command {
         Command::Tags(tags_args) => match tags_args.command {
-            TagsCommand::List => Box::new(TagsListOutput { tags: get_tags() }),
+            TagsCommand::List => {
+                let tags = sqlite_store
+                    .all_tagged("notes_lsm::tag")
+                    .await
+                    .unwrap()
+                    .into_iter()
+                    .filter(|encrypted| encrypted.version == "v0-alpha0")
+                    .map(|encrypted| encrypted.decrypt::<PASETO_V4>(&key).unwrap())
+                    .map(|decrypted| serde_json::from_slice(&decrypted.data.0).unwrap())
+                    .collect();
+
+                Box::new(TagsListOutput { tags })
+            }
             TagsCommand::Add { tag, description } => {
                 println!("adding tag {tag:?} with description {description:?}",);
+
+                let idx = sqlite_store
+                    .last(host_id, "notes_lsm::tag")
+                    .await
+                    .unwrap()
+                    .map_or(0, |p| p.idx + 1);
+
+                let record = Record::builder()
+                    .data(DecryptedData(
+                        serde_json::to_vec(&Tag { tag, description }).unwrap(),
+                    ))
+                    .tag("notes_lsm::tag".to_string())
+                    .idx(idx)
+                    .host(Host::new(host_id))
+                    .version("v0-alpha0".to_string())
+                    .build();
+                let record = record.encrypt::<PASETO_V4>(&key);
+                sqlite_store.push(&record).await.unwrap();
+
                 Box::new(NoOutput {})
             }
         },
@@ -68,6 +113,29 @@ fn main() {
                 "adding {:?} with tags {:?}",
                 record_args.note, record_args.tags
             );
+
+            let idx = sqlite_store
+                .last(host_id, "notes_lsm::record")
+                .await
+                .unwrap()
+                .map_or(0, |p| p.idx + 1);
+
+            let record = Record::builder()
+                .data(DecryptedData(
+                    serde_json::to_vec(&NoteLeaf {
+                        note: record_args.note,
+                        tags: record_args.tags,
+                    })
+                    .unwrap(),
+                ))
+                .tag("notes_lsm::record".to_string())
+                .idx(idx)
+                .host(Host::new(host_id))
+                .version("v0-alpha0".to_string())
+                .build();
+            let record = record.encrypt::<PASETO_V4>(&key);
+            sqlite_store.push(&record).await.unwrap();
+
             Box::new(NoOutput {})
         }
     };
@@ -89,9 +157,11 @@ impl EncodeOutput for TagsListOutput {
         match method {
             Output::Text => {
                 let mut table = Table::new();
-                table
-                    .set_header(["tag", "description"])
-                    .add_rows(self.tags.into_iter().map(|tag| [tag.tag, tag.description]));
+                table.set_header(["tag", "description"]).add_rows(
+                    self.tags
+                        .into_iter()
+                        .map(|tag| [tag.tag, tag.description.unwrap_or_default()]),
+                );
                 writeln!(w, "{table}")
             }
             Output::Json => json(&self.tags, w),
@@ -110,23 +180,10 @@ impl EncodeOutput for NoOutput {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 struct Tag {
     tag: String,
-    description: String,
-}
-
-fn get_tags() -> Vec<Tag> {
-    vec![
-        Tag {
-            tag: "work".to_string(),
-            description: "Work related things".to_string(),
-        },
-        Tag {
-            tag: "personal".to_string(),
-            description: "Personal related things".to_string(),
-        },
-    ]
+    description: Option<String>,
 }
 
 pub fn json<T>(value: &T, w: &mut dyn io::Write) -> io::Result<()>
@@ -139,4 +196,10 @@ where
 
 fn json_io_error(e: serde_json::Error) -> io::Error {
     io::Error::new(e.io_error_kind().unwrap_or(io::ErrorKind::Other), e)
+}
+
+#[derive(Serialize, Deserialize)]
+struct NoteLeaf {
+    note: String,
+    tags: Vec<String>,
 }
