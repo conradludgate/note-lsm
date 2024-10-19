@@ -1,4 +1,8 @@
-import { Form, ActionPanel, Action, popToRoot, LaunchProps, Detail, getPreferenceValues } from "@raycast/api";
+import { Form, ActionPanel, Action, popToRoot, LaunchProps, getPreferenceValues } from "@raycast/api";
+import { useExec, useFrecencySorting } from "@raycast/utils";
+import { execFile } from "child_process";
+import { useMemo } from "react";
+import { promisify } from "util";
 
 interface QuickNoteDraft {
   tags: string[],
@@ -9,32 +13,59 @@ interface QuickNoteArgs {
 }
 
 interface Preferences {
-  tags: string[] | undefined,
+  cmdPath: string,
+}
+
+interface Tag {
+  tag: string,
+  description: string | null,
 }
 
 export default function QuickNote(props: LaunchProps<{ draftValues: QuickNoteDraft, arguments: QuickNoteArgs }>) {
-  const { draftValues, arguments: { note } } = props;
-  const { tags } = getPreferenceValues<Preferences>();
+  const { cmdPath } = getPreferenceValues<Preferences>();
+  const { isLoading, data } = useExec(cmdPath, ["--output=json", "tags", "list"]);
 
-  console.log(note);
+  const tags = useMemo<Tag[]>(() => {
+    const tags: Tag[] = JSON.parse(data || "[]");
+    // return tags.map(tag => ({ id: tag.tag, description: tag.description }));
+    return tags
+  }, [data]);
+  const { data: sortedTags, visitItem } = useFrecencySorting<Tag>(tags, {
+    key: (tag) => tag.tag
+  });
+
+  const { draftValues, arguments: { note } } = props;
 
   return (
     <Form
+      isLoading={isLoading}
       enableDrafts
       actions={
         <ActionPanel>
           <Action.SubmitForm
-            onSubmit={(values: QuickNoteDraft) => {
-              console.log("onSubmit", { note, tags: values.tags });
-              popToRoot();
+            onSubmit={async (values: QuickNoteDraft) => {
+              await Promise.all(values.tags.map(tag => visitItem(JSON.parse(tag))));
+
+              const tags = values.tags.flatMap((tag) => {
+                const t: Tag = JSON.parse(tag);
+                return ["record", "--tag", t.tag]
+              });
+
+              const { stdout, stderr } = await promisify(execFile)(cmdPath, [...tags, note]);
+              console.log({ stdout, stderr });
+
+              await popToRoot();
             }}
           />
         </ActionPanel>
       }
     >
-      <Detail markdown={note} />
       <Form.TagPicker id="tags" title="Tags" defaultValue={draftValues?.tags}>
-        {tags?.map((tag, i) => <Form.TagPicker.Item key={i} value={tag} title={tag} />)}
+        {sortedTags?.map((tag) => <Form.TagPicker.Item
+          key={tag.tag}
+          value={JSON.stringify(tag)}
+          title={tag.description ?? tag.tag}
+        />)}
       </Form.TagPicker>
     </Form>
   );

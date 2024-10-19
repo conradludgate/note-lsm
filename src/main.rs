@@ -39,7 +39,7 @@ enum TagsCommand {
 
 #[derive(clap::Parser, Debug)]
 struct RecordArgs {
-    #[arg(short, long)]
+    #[arg(short, long = "tag")]
     tags: Vec<String>,
 
     note: String,

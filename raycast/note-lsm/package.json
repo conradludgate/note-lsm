@@ -26,6 +26,17 @@
       ]
     }
   ],
+  "preferences": [
+    {
+      "name": "cmdPath",
+      "title": "Note LSM command",
+      "description": "The path executable for Note LSM",
+      "type": "textfield",
+      "required": false,
+      "placeholder": "note-lsm",
+      "default": "note-lsm"
+    }
+  ],
   "dependencies": {
     "@raycast/api": "^1.84.3",
     "@raycast/utils": "^1.17.0"
