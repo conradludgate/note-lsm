@@ -15,7 +15,7 @@
       "title": "Quick Note",
       "subtitle": "Quickly jot down something to remember",
       "description": "Appends a new note to the end of your note list. There's no editing of notes, just write it down quickly. Take shortcuts here. With the ideas of \"Log Structured-Merge\", you can merge and curate the notes later when you have time.",
-      "mode": "view",
+      "mode": "no-view",
       "arguments": [
         {
           "name": "note",
