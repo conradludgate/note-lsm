@@ -24,6 +24,13 @@
           "required": true
         }
       ]
+    },
+    {
+      "name": "reminder",
+      "title": "Reminder to take notes",
+      "description": "Reminder to take notes",
+      "mode": "no-view",
+      "interval": "10m"
     }
   ],
   "preferences": [

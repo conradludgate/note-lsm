@@ -1,11 +1,7 @@
 use std::{io, path::PathBuf};
 
-use atuin_client::{
-    encryption,
-    record::{encryption::PASETO_V4, sqlite_store::SqliteStore, store::Store},
-};
-use atuin_common::record::{DecryptedData, Host, Record, RecordId};
 use clap::Parser;
+use note_lsm_lib::Client;
 // use comfy_table::Table;
 use serde::{Deserialize, Serialize};
 
@@ -42,39 +38,13 @@ enum Output {
 async fn main() {
     let args = Args::parse();
 
-    let settings = atuin_client::settings::Settings::new().unwrap();
-    let sqlite_store = SqliteStore::new(&settings.record_store_path, settings.local_timeout)
-        .await
-        .unwrap();
-
-    let host_id = atuin_client::settings::Settings::host_id().expect("failed to get host_id");
-    let key = encryption::load_key(&settings).unwrap().into();
+    let client = Client::new().await;
 
     let output: Box<dyn EncodeOutput> = match args.command {
         Command::Record(record_args) => {
             println!("adding {:?}", record_args.note);
 
-            let idx = sqlite_store
-                .last(host_id, "notes_lsm::record")
-                .await
-                .unwrap()
-                .map_or(0, |p| p.idx + 1);
-
-            let record = Record::builder()
-                .data(DecryptedData(
-                    serde_json::to_vec(&Note {
-                        note: record_args.note,
-                        children: vec![],
-                    })
-                    .unwrap(),
-                ))
-                .tag("notes_lsm::record".to_string())
-                .idx(idx)
-                .host(Host::new(host_id))
-                .version("v0-alpha2".to_string())
-                .build();
-            let record = record.encrypt::<PASETO_V4>(&key);
-            sqlite_store.push(&record).await.unwrap();
+            client.add_record(record_args.note, vec![]).await;
 
             Box::new(NoOutput {})
         }
@@ -115,10 +85,4 @@ where
 
 fn json_io_error(e: serde_json::Error) -> io::Error {
     io::Error::new(e.io_error_kind().unwrap_or(io::ErrorKind::Other), e)
-}
-
-#[derive(Serialize, Deserialize)]
-struct Note {
-    note: String,
-    children: Vec<RecordId>,
 }
