@@ -8,7 +8,7 @@
     selectStack: string[];
 	}
 
-  let { key, children, selectStack, ...props }: Props = $props();
+  let { key, children, selectStack = $bindable(), ...props }: Props = $props();
 
   let isSelected = $derived(arrayHashPrefix(selectStack, key));
 
@@ -22,7 +22,6 @@
     conv.hsluvToHex()
     return conv.hex;
   });
-
 
   function arrayHashPrefix(a: string[], prefix: string[]): boolean {
     return prefix.length <= a.length && prefix.every((el, ix) => el === a[ix]);

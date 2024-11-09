@@ -55,7 +55,7 @@ impl Client {
 }
 
 #[derive(Serialize, Deserialize)]
-struct Note {
-    note: String,
-    children: Vec<RecordId>,
+pub struct Note {
+    pub note: String,
+    pub children: Vec<RecordId>,
 }

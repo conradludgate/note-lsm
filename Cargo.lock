@@ -2628,11 +2628,14 @@ dependencies = [
 name = "note-lsm-app"
 version = "0.1.0"
 dependencies = [
+ "note-lsm-lib",
  "serde",
  "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-shell",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]
