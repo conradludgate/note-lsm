@@ -1,3 +1,5 @@
+import { Hsluv } from "hsluv";
+
 export const keyHash = (key: string[]) => {
     // modified from https://stackoverflow.com/a/52171480
 
@@ -19,3 +21,14 @@ export const keyHash = (key: string[]) => {
 
     return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 };
+
+export const keyColor = (key: string[]): string => {
+    let hash = keyHash(key);
+
+    let conv = new Hsluv();
+    conv.hsluv_h = (hash / 3600) % 360.0;
+    conv.hsluv_s = 90;
+    conv.hsluv_l = 80;
+    conv.hsluvToHex()
+    return conv.hex;
+}

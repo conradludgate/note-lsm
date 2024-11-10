@@ -1,23 +1,22 @@
 <script lang="ts">
-  import NoteStack from "../components/NoteStack.svelte";
   import Inspiration from "../components/Inspiration.svelte";
   import { invoke } from "@tauri-apps/api/core";
   import NoteEntryLoader from "../components/NoteEntryLoader.svelte";
+  import Bar from "../components/Bar.svelte";
 
-  let load = $state(invoke<string[]>("unprocessed", {}));
-
-  let selectStack = $state(["foo"]);
+  let selectStack = $state([]);
 </script>
 
 <main class="container">
   <div class="notestack">
-    <NoteStack key={[]} bind:selectStack>
+    <Bar key={[]} />
+    <div class="list">
       {#await invoke<string[]>("unprocessed", {}) then notes}
         {#each notes as note}
           <NoteEntryLoader key={[note]} bind:selectStack />
         {/each}
       {/await}
-    </NoteStack>
+    </div>
   </div>
   <div class="notetext">
     <Inspiration />
@@ -50,6 +49,12 @@
 
   .notestack {
     width: 300px;
+    display: flex;
+    height: max-content;
+  }
+
+  .notestack > .list {
+    width: 100%;
   }
 
   .notetext {
