@@ -1,7 +1,5 @@
 <script lang="ts">
   import type { RootContent } from "mdast";
-  import { fromMarkdown } from "mdast-util-from-markdown";
-  import RenderContent from "./RenderContent.svelte";
   import RenderChildren from "./RenderChildren.svelte";
   import RenderVerbatim from "./RenderVerbatim.svelte";
 
@@ -11,6 +9,8 @@
   }
 
   const { data, node: n }: Props = $props();
+
+  // $inspect({node: n});
 
   // blockquote: Blockquote;
   // break: Break;
@@ -68,7 +68,13 @@
 {:else if n.type === "thematicBreak"}
   <RenderVerbatim {data} node={n} />
 {:else if n.type === "link"}
-  <RenderChildren {data} node={n} />
+  <a title={n.title} href={n.url} target="_blank"><RenderChildren {data} node={n} /></a>
+{:else if n.type === "definition"}
+  <a id={n.identifier} title={n.title} href={n.url} target="_blank"><RenderVerbatim {data} node={n} /></a>
+{:else if n.type === "linkReference"}
+  <a title={n.label} href={`#${n.identifier}`}><RenderChildren {data} node={n} /></a>
+{:else if n.type === "code"}
+  <code><RenderVerbatim {data} node={n} /></code>
 {:else}
   <div style:display="inline" class={n.type}>
     <RenderVerbatim {data} node={n} />

@@ -38,7 +38,7 @@
         <textarea readonly>{note.note}</textarea>
       {/await}
     {/if}
-    <div contenteditable>
+    <div>
       <Render/>
     </div>
   </div>

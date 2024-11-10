@@ -1,16 +1,19 @@
 <script lang="ts">
   import { fromMarkdown } from "mdast-util-from-markdown";
-  import RenderContent from "./RenderContent.svelte";
   import RenderChildren from "./RenderChildren.svelte";
+  import type { Action } from "svelte/action";
+  import type { FormEventHandler } from "svelte/elements";
 
-  const data = `1) Hello, _Jupiter_ and *Neptune* and **Pluto**!
+  let data = $state(`1) Hello, _Jupiter_ and *Neptune* and **Pluto**[0]!
 2) the world is full of [cats](https://http.cat/404)
+
+[0]: https://http.cat/418
 
 ---
 
 hello
 
-# hello 1
+# hello 1 
 
 ## hello 2
 
@@ -21,10 +24,24 @@ hello
 ##### hello 5
 
 ###### hello 6
-`;
-  const node = fromMarkdown(data);
+
+\`\`\`rust
+lol
+\`\`\`
+`);
+  const node = $derived(fromMarkdown(data));
+
+  const check: Action = $derived((renderNode) => {
+    console.log(renderNode.innerText === data);
+  });
+  const update: FormEventHandler<HTMLDivElement> = $derived((event) => {
+    console.log(event.currentTarget.innerText);
+    data = event.currentTarget.innerText;
+  });
 </script>
 
-<RenderChildren {data} {node} />
+<div use:check contenteditable="plaintext-only" oninput={update}>
+  <RenderChildren {data} {node} />
+</div>
 
 <style></style>
