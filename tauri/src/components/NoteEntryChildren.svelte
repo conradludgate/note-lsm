@@ -6,12 +6,18 @@
   interface Props {
     key: string[];
     childrenIds: string[];
-    selectStack: string[];
+    openNoteStack: string[];
+    selectedNotes: string[];
   }
 
-  let { key, childrenIds, selectStack = $bindable() }: Props = $props();
+  let {
+    key,
+    childrenIds,
+    openNoteStack = $bindable(),
+    selectedNotes = $bindable(),
+  }: Props = $props();
 
-  let isParentSelected = $derived(arrayHashPrefix(selectStack, key));
+  let isParentSelected = $derived(arrayHashPrefix(openNoteStack, key));
 
   function arrayHashPrefix(a: string[], prefix: string[]): boolean {
     return prefix.length <= a.length && prefix.every((el, ix) => el === a[ix]);
@@ -43,7 +49,11 @@
     <Bar {key} />
     <div class="list">
       {#each childrenIds as childId}
-        <NoteEntryLoader key={[...key, childId]} bind:selectStack />
+        <NoteEntryLoader
+          key={[...key, childId]}
+          bind:openNoteStack
+          bind:selectedNotes
+        />
       {/each}
     </div>
   </div>

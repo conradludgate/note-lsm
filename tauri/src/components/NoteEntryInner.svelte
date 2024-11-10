@@ -13,12 +13,13 @@
     key: string[];
     datetime: string;
     text: string;
-    selectStack: string[];
+    openNoteStack: string[];
+    selectedNotes: string[];
   }
 
-  let { key, datetime, text, selectStack = $bindable() }: Props = $props();
+  let { key, datetime, text, openNoteStack = $bindable(), selectedNotes = $bindable() }: Props = $props();
 
-  let isSelected = $derived(arrayEqual(selectStack, key));
+  let isSelected = $derived(arrayEqual(openNoteStack, key));
 
   let date = $derived.by(() => {
     if (datetime === "") {
@@ -78,7 +79,7 @@
   class="inner"
   class:selected={isSelected}
   onclick={() => {
-    selectStack = key;
+    openNoteStack = key;
   }}
 >
   <p class="text">{text}</p>

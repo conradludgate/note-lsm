@@ -15,7 +15,7 @@
   .bar {
     z-index: 1;
     width: 8px;
-    margin: 0px 2px 0px 4px;
+    margin-right: 6px;
     border: 0px solid;
     border-bottom-left-radius: 4px;
     border-bottom-right-radius: 4px;
