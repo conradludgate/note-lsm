@@ -60,6 +60,6 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    margin-left: 4px;
+    margin-left: 0px;
   }
 </style>

@@ -1,3 +1,4 @@
+use jiff::{civil::datetime, tz::TimeZone, Zoned};
 use note_lsm_lib::RecordId;
 use serde::Serialize;
 use uuid::uuid;
@@ -11,7 +12,7 @@ fn greet(name: &str) -> String {
 #[derive(Serialize)]
 pub struct Note {
     pub note: String,
-    pub datetime: String,
+    pub datetime: Zoned,
     pub children: Vec<RecordId>,
 }
 
@@ -29,23 +30,31 @@ async fn unprocessed() -> Vec<RecordId> {
 async fn get_note(id: RecordId) -> Note {
     match id {
         FOO => Note {
-            note: "foo".to_string(),
-            datetime: "yesterday".to_string(),
+            note: "this is a long note just to test how the over flow is handled lol ok bye wait on this line is not long enough yet lol ok now try".to_string(),
+            datetime: datetime(2024, 11, 10, 10, 30, 22, 0)
+                .to_zoned(TimeZone::get("Europe/Paris").unwrap())
+                .unwrap(),
             children: vec![FOO2],
         },
         FOO2 => Note {
             note: "foo/foo2".to_string(),
-            datetime: "yesterday".to_string(),
+            datetime: datetime(2024, 11, 10, 2, 0, 0, 0)
+                .to_zoned(TimeZone::get("Europe/London").unwrap())
+                .unwrap(),
             children: vec![],
         },
         BAR => Note {
             note: "bar".to_string(),
-            datetime: "today".to_string(),
+            datetime: datetime(2024, 11, 9, 12, 19, 22, 0)
+                .to_zoned(TimeZone::get("Europe/Paris").unwrap())
+                .unwrap(),
             children: vec![],
         },
         BAZ => Note {
-            note: "baz".to_string(),
-            datetime: "tomorrow".to_string(),
+            note: "my birthday :3".to_string(),
+                datetime: datetime(2023, 12, 19, 11, 19, 22, 0)
+                    .to_zoned(TimeZone::get("Europe/Paris").unwrap())
+                    .unwrap(),
             children: vec![],
         },
         _ => panic!("unknown note"),

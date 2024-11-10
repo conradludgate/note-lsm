@@ -48,7 +48,8 @@
   }
 
   .notestack {
-    width: 300px;
+    flex: 0 0 auto;
+    width: 350px;
     display: flex;
     height: max-content;
   }
