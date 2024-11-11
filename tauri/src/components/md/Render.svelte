@@ -1,47 +1,40 @@
 <script lang="ts">
-  import { fromMarkdown } from "mdast-util-from-markdown";
-  import RenderChildren from "./RenderChildren.svelte";
   import type { Action } from "svelte/action";
-  import type { FormEventHandler } from "svelte/elements";
+  import * as monaco from "monaco-editor";
 
-  let data = $state(`1) Hello, _Jupiter_ and *Neptune* and **Pluto**[0]!
-2) the world is full of [cats](https://http.cat/404)
+  interface Props {
+    text: string;
+    readOnly: boolean;
+  }
 
-[0]: https://http.cat/418
-
----
-
-hello
-
-# hello 1 
-
-## hello 2
-
-### hello 3
-
-#### hello 4
-
-##### hello 5
-
-###### hello 6
-
-\`\`\`rust
-lol
-\`\`\`
-`);
-  const node = $derived(fromMarkdown(data));
+  let { text = $bindable(), readOnly = false }: Props = $props();
 
   const check: Action = $derived((renderNode) => {
-    console.log(renderNode.innerText === data);
-  });
-  const update: FormEventHandler<HTMLDivElement> = $derived((event) => {
-    console.log(event.currentTarget.innerText);
-    data = event.currentTarget.innerText;
+    let editor = monaco.editor.create(renderNode, {
+      value: text,
+      language: "markdown",
+      minimap: {
+        enabled: false,
+      },
+      fontSize: 16,
+      readOnly,
+      lineNumbers: "off",
+      scrollbar: {
+        vertical: "hidden",
+        horizontal: "hidden",
+      },
+    });
+
+    editor.onDidChangeModelContent((_e) => {
+      text = editor.getValue();
+    });
   });
 </script>
 
-<div use:check contenteditable="plaintext-only" oninput={update}>
-  <RenderChildren {data} {node} />
-</div>
+<div use:check></div>
 
-<style></style>
+<style>
+  div {
+    height: 100%;
+  }
+</style>
