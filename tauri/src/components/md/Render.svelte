@@ -39,7 +39,7 @@
 
   let { text = $bindable(), readOnly = false }: Props = $props();
 
-  const check: Action = $derived((renderNode) => {
+  const check: Action<HTMLDivElement> = $derived((renderNode) => {
     let editor = monaco.editor.create(renderNode, {
       value: text,
       language: "markdown",
@@ -55,6 +55,11 @@
       },
       cursorBlinking: readOnly ? "solid": undefined,
       cursorStyle: readOnly ? "line-thin": undefined,
+      automaticLayout: true,
+      contextmenu: false,
+      scrollBeyondLastLine: false,
+      wrappingStrategy: "advanced",
+      wordWrap: "on"
     });
 
     editor.onDidChangeModelContent((_e) => {
@@ -67,6 +72,7 @@
 
 <style>
   div {
+    width: 100%;
     height: 100%;
   }
 </style>

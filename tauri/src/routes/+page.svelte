@@ -126,8 +126,9 @@ lol
   }
 
   .notetext {
+    min-width: 0;
     width: 100%;
-    padding: 25px;
+    padding-left: 4px;
 
     text-align: left;
   }
