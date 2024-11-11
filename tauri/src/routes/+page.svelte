@@ -4,6 +4,7 @@
   import NoteEntryLoader from "../components/NoteEntryLoader.svelte";
   import Bar from "../components/Bar.svelte";
   import Render from "../components/md/Render.svelte";
+  import { SvelteSet } from "svelte/reactivity";
 
   interface Note {
     note: string;
@@ -38,7 +39,9 @@ lol
 `);
 
   let openNoteStack = $state<string[]>([]);
-  let selectedNotes = $state<string[]>([]);
+  let selectedNotes = $state<SvelteSet<string>>(new SvelteSet());
+
+  $inspect(selectedNotes);
 </script>
 
 <main class="container">

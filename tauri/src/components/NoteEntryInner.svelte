@@ -7,19 +7,22 @@
 </script>
 
 <script lang="ts">
-  import { Temporal, Intl, toTemporalInstant } from "@js-temporal/polyfill";
+  import { Temporal } from "@js-temporal/polyfill";
+  import type { SvelteSet } from "svelte/reactivity";
+  import { formatTime } from "../time";
 
   interface Props {
     key: string[];
     datetime: string;
     text: string;
     openNoteStack: string[];
-    selectedNotes: string[];
+    selectedNotes: SvelteSet<string>;
   }
 
   let { key, datetime, text, openNoteStack = $bindable(), selectedNotes = $bindable() }: Props = $props();
 
-  let isSelected = $derived(arrayEqual(openNoteStack, key));
+  let opened = $derived(arrayEqual(openNoteStack, key));
+  let selected = $derived(key.length === 1 && selectedNotes.has(key[0]));
 
   let date = $derived.by(() => {
     if (datetime === "") {
@@ -28,44 +31,7 @@
     let now2 = Temporal.ZonedDateTime.from(now);
     let dt = Temporal.ZonedDateTime.from(datetime);
 
-    let duration = dt.until(now2).round({ smallestUnit: "seconds", roundingMode: "trunc"});
-
-    let totalSeconds = duration.total("seconds");
-    // edge case.
-    if (totalSeconds < -30) {
-      return dt.toLocaleString();
-    }
-
-    if (totalSeconds < 30) {
-      return "now"
-    }
-
-    if (totalSeconds < 90) {
-      let seconds = duration.round({ largestUnit: "seconds", smallestUnit: "seconds", roundingMode: "trunc"}).total("seconds");
-      return `${seconds}s ago`
-    }
-
-    if (totalSeconds < 90*60) {
-      let minutes = duration.round({ largestUnit: "minutes", smallestUnit: "minutes", roundingMode: "trunc"}).total("minutes");
-      return `${minutes}m ago`
-    }
-
-    let dtMinutes = dt.round("minute");
-
-    let timeZoneName: "short" | undefined = "short";
-    if (dtMinutes.timeZoneId == now2.timeZoneId) {
-      timeZoneName = undefined;
-    }
-
-    if (dtMinutes.toPlainDate().equals(now2.toPlainDate())) {
-      return dtMinutes.toLocaleString([], {hour: '2-digit', minute:'2-digit', timeZoneName});
-    }
-
-    if (dtMinutes.year === now2.year) {
-      return dtMinutes.toLocaleString([], {month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit', timeZoneName});
-    }
-
-    return dtMinutes.toLocaleString([], {year: 'numeric', month: 'numeric', day: 'numeric'});
+    return formatTime(dt, now2);
   });
 
   function arrayEqual(a: string[], b: string[]): boolean {
@@ -77,9 +43,23 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="inner"
-  class:selected={isSelected}
-  onclick={() => {
-    openNoteStack = key;
+  class:opened={opened}
+  class:selected={selected}
+  onclick={(e) => {
+    if (e.shiftKey) {
+      if (key.length !== 1) {
+        return;
+      }
+      let k = key[0];
+
+      if (selectedNotes.has(k)) {
+        selectedNotes.delete(k)
+      } else {
+        selectedNotes.add(k)
+      }
+    } else {
+      openNoteStack = key;
+    }
   }}
 >
   <p class="text">{text}</p>
@@ -97,9 +77,13 @@
     position: relative;
     margin-left: -8px;
     border-bottom-left-radius: 4px;
+
+    -webkit-user-select: none; /* Safari */
+    user-select: none; /* Standard syntax */
+    cursor: pointer;
   }
 
-  .inner.selected {
+  .inner.opened {
     background-color: rgb(227, 227, 227);
   }
 

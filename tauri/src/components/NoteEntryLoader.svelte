@@ -2,11 +2,12 @@
   import { invoke } from "@tauri-apps/api/core";
   import NoteEntryInner from "./NoteEntryInner.svelte";
   import NoteEntryChildren from "./NoteEntryChildren.svelte";
+  import type { SvelteSet } from "svelte/reactivity";
 
   interface Props {
     key: string[];
     openNoteStack: string[];
-    selectedNotes: string[];
+    selectedNotes: SvelteSet<string>;
   }
 
   interface Note {

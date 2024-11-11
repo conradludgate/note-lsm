@@ -2,12 +2,13 @@
   import type { TransitionConfig } from "svelte/transition";
   import NoteEntryLoader from "./NoteEntryLoader.svelte";
   import Bar from "./Bar.svelte";
+  import type { SvelteSet } from "svelte/reactivity";
 
   interface Props {
     key: string[];
     childrenIds: string[];
     openNoteStack: string[];
-    selectedNotes: string[];
+    selectedNotes: SvelteSet<string>;
   }
 
   let {
