@@ -14,10 +14,10 @@
 <style>
   .bar {
     z-index: 1;
-    width: 8px;
-    margin-right: 6px;
+    width: 0.5em;
+    /* margin-right: 0.375em; */
     border: 0px solid;
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 0.25em;
+    /* border-bottom-right-radius: 0.25em; */
   }
 </style>

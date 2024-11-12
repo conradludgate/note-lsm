@@ -62,9 +62,10 @@
 
 <style>
   .notestack {
-    width: 100%;
+    width: calc(100% - 0.375em);
     display: flex;
     height: max-content;
+    margin-left: 0.375em;
   }
 
   .list {
