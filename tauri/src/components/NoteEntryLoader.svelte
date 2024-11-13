@@ -1,5 +1,17 @@
-<script lang="ts">
+<script module>
   import { invoke } from "@tauri-apps/api/core";
+  interface Note {
+    note: string;
+    datetime: string;
+    children: string[];
+  }
+
+  async function getNote(id: string): Promise<Note> {
+    return await invoke<Note>("get_note", { id });
+  }
+</script>
+
+<script lang="ts">
   import NoteEntryInner from "./NoteEntryInner.svelte";
   import NoteEntryChildren from "./NoteEntryChildren.svelte";
   import type { SvelteSet } from "svelte/reactivity";
@@ -10,12 +22,6 @@
     selectedNotes: SvelteSet<string>;
   }
 
-  interface Note {
-    note: string;
-    datetime: string;
-    children: string[];
-  }
-
   let {
     key,
     openNoteStack = $bindable(),
@@ -23,35 +29,27 @@
   }: Props = $props();
 </script>
 
+{#snippet entry(text: string, datetime: string, children: string[])}
+  <NoteEntryInner
+    {key}
+    datetime={datetime}
+    text={text}
+    bind:openNoteStack
+    bind:selectedNotes
+  />
+  <NoteEntryChildren
+    {key}
+    childrenIds={children}
+    bind:openNoteStack
+    bind:selectedNotes
+  />
+{/snippet}
+
 <div class="entry">
-  {#await invoke < Note > ("get_note", { id: key[key.length - 1] })}
-    <NoteEntryInner
-      {key}
-      datetime={""}
-      text={""}
-      bind:openNoteStack
-      bind:selectedNotes
-    />
-    <NoteEntryChildren
-      {key}
-      childrenIds={[]}
-      bind:openNoteStack
-      bind:selectedNotes
-    />
+  {#await getNote(key[key.length - 1])}
+    {@render entry("", "", [])}
   {:then note}
-    <NoteEntryInner
-      {key}
-      datetime={note.datetime}
-      text={note.note}
-      bind:openNoteStack
-      bind:selectedNotes
-    />
-    <NoteEntryChildren
-      {key}
-      childrenIds={note.children}
-      bind:openNoteStack
-      bind:selectedNotes
-    />
+    {@render entry(note.note, note.datetime, note.children)}
   {/await}
 </div>
 

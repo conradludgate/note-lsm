@@ -1,10 +1,4 @@
 <script module>
-  let now = $state(Temporal.Now.zonedDateTimeISO().toString());
-  const id = setInterval(
-    () => { now = Temporal.Now.zonedDateTimeISO().toString(); },
-    1000
-  );
-
   let keyHandlerSetup = $state(false);
   let shift = $state(false);
 
@@ -16,11 +10,10 @@
 </script>
 
 <script lang="ts">
-  import { Temporal } from "@js-temporal/polyfill";
   import type { SvelteSet } from "svelte/reactivity";
-  import { formatTime } from "../time";
   import type { MouseEventHandler } from "svelte/elements";
   import { onMount } from "svelte";
+  import DateTime from "./DateTime.svelte";
 
   onMount(() => {
     $effect(() => {
@@ -59,15 +52,6 @@
       openNoteStack = key;
     }
   });
-
-  let date = $derived.by(() => {
-    if (datetime === "") return "";
-
-    let now2 = Temporal.ZonedDateTime.from(now);
-    let dt = Temporal.ZonedDateTime.from(datetime);
-
-    return formatTime(dt, now2);
-  });
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -81,10 +65,10 @@
   onclick={select}
 >
   <p class="text">{text}</p>
-  <span class="date">{date}</span>
+  <div class="date"><DateTime {datetime}/></div>
 </div>
 
-<style>
+<style lang="scss">
   .inner {
     height: 3.5em;
     transition: 150ms;
@@ -99,67 +83,77 @@
 
     background-color: #f6f6f6;
     border-block: solid 0.2em #f6f6f6;
-  }
 
-  .inner:hover.shift {
-    background-color: #f6f6f6;
-    border-block: solid 0.2em #f6f6f6;
-    cursor:not-allowed;
-  }
+    > .text {
+      height: 2.4em;
+      font-size: 1em;
+      line-height: 1.2em;
+      margin-top: 0;
+      text-align: left;
+      overflow: clip;
+      text-overflow: ellipsis;
+      text-wrap-style: pretty;
+    }
 
-  .inner.opened {
-    background-color: rgb(227, 227, 227);
-    border-block: solid 0.2em rgb(227, 227, 227);
-  }
+    > .date {
+      font-size: 1em;
+      position: absolute;
+      right: 0.4em;
+      bottom: 0.4em;
+    }
 
-  .inner:hover.opened.shift {
-    background-color: rgb(227, 227, 227);
-    border-block: solid 0.2em rgb(227, 227, 227);
-  }
+    // :hover is for regular click, which toggles .opened
+    // :hover.shift is for shift-click, which toggles .selected
 
-  .inner:hover {
-    background-color: rgb(227, 227, 227);
-    border-block: solid 0.2em rgb(194, 194, 194);
-  }
+    &:hover {
+      background-color: rgb(227, 227, 227);
+      border-block: solid 0.2em rgb(194, 194, 194);
+    }
 
-  .inner:hover.shift[data-depth="1"] {
-    background-color: rgb(95, 199, 140);
-    /* box-shadow: inset 0.2em 0em 0.2em 0.2em rgb(194, 194, 194); */
-    border-block: solid 0.2em rgb(194, 194, 194);
-    cursor: pointer;
-  }
+    // for depth != 1, disable the cursor for shift-click.
+    &:hover.shift {
+      background-color: #f6f6f6;
+      border-block: solid 0.2em #f6f6f6;
+      cursor:not-allowed;
+    }
 
-.inner:hover.selected.shift[data-depth="1"] {
-  background-color: rgb(150, 189, 167);
-  /* box-shadow: inset 0.2em 0em 0.2em 0.2em rgb(194, 194, 194); */
-  border-block: solid 0.2em rgb(194, 194, 194);
-  cursor: pointer;
-}
+    // for depth = 1, we re-enable the cursor for shift-click.
+    &:hover.shift[data-depth="1"] {
+      background-color: rgb(95, 199, 140);
+      /* box-shadow: inset 0.2em 0em 0.2em 0.2em rgb(194, 194, 194); */
+      border-block: solid 0.2em rgb(194, 194, 194);
+      cursor: pointer;
+    }
 
-  .inner.selected {
-    background-color: rgb(95, 199, 140);
-    border-block: solid 0.2em rgb(227, 227, 227);
-  }
+    &.opened {
+      background-color: rgb(227, 227, 227);
+      border-block: solid 0.2em rgb(227, 227, 227);
 
-  .inner.opened:hover {
-    background-color: rgb(227, 227, 227);
-  }
+      &:hover {
+        background-color: rgb(238, 238, 238);
+      }
 
-  .inner > .text {
-    height: 2.4em;
-    font-size: 1em;
-    line-height: 1.2em;
-    margin-top: 0;
-    text-align: left;
-    overflow: clip;
-    text-overflow: ellipsis;
-    text-wrap-style: pretty;
-  }
+      &:hover.shift[data-depth="1"] {
+        background-color: rgb(227, 227, 227);
+        border-block: solid 0.2em rgb(227, 227, 227);
+      }
+    }
 
-  .inner > .date {
-    font-size: 1em;
-    position: absolute;
-    right: 0.4em;
-    bottom: 0.4em;
+    &.selected {
+      background-color: rgb(95, 199, 140);
+      border-block: solid 0.2em rgb(227, 227, 227);
+
+      &:hover {
+        background-color: rgb(227, 227, 227);
+        border-block: solid 0.2em rgb(194, 194, 194);
+      }
+
+      &:hover.shift[data-depth="1"] {
+        background-color: rgb(150, 189, 167);
+        /* box-shadow: inset 0.2em 0em 0.2em 0.2em rgb(194, 194, 194); */
+        border-block: solid 0.2em rgb(194, 194, 194);
+        cursor: pointer;
+      }
+    }
   }
 </style>
