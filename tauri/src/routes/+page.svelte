@@ -1,47 +1,19 @@
 <script lang="ts">
   import Inspiration from "../components/Inspiration.svelte";
-  import { invoke } from "@tauri-apps/api/core";
   import NoteEntryLoader from "../components/NoteEntryLoader.svelte";
   import Bar from "../components/Bar.svelte";
   import Render from "../components/md/Render.svelte";
-  import { SvelteSet } from "svelte/reactivity";
+  import { getNote, unprocessed } from "../native";
 
-  interface Note {
-    note: string;
-    datetime: string;
-    children: string[];
-  }
-
-  let draft = $state(`1) Hello, _Jupiter_ and *Neptune* and **Pluto**[0]!
-2) the world is full of [cats](https://http.cat/404)
-
-[0]: https://http.cat/418
-
----
-
-hello
-
-# hello 1
-
-## hello 2
-
-### hello 3
-
-#### hello 4
-
-##### hello 5
-
-###### hello 6
-
-\`\`\`rust
-lol
-\`\`\`
-`);
-
+  let draft = $state("");
   let openNoteStack = $state<string[]>([]);
-  let selectedNotes = $state<SvelteSet<string>>(new SvelteSet());
+  let selectedNotes = $state<string[]>([]);
 
-  $inspect(selectedNotes);
+  $effect(() => {
+    Promise.all(selectedNotes.map((id) => getNote(id))).then((notes) => {
+      draft = notes.map((note) => note.note).join("\n\n---\n\n");
+    });
+  });
 </script>
 
 <main class="container">
@@ -50,13 +22,18 @@ lol
     <div class="list">
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="edit" onclick={() => { openNoteStack = [":draft:"]; }}>
+      <div
+        class="edit"
+        onclick={() => {
+          openNoteStack = [":draft:"];
+        }}
+      >
         <i class="fa-regular fa-edit"></i>
         <span>New Note</span>
       </div>
-      {#await invoke<string[]>("unprocessed", {}) then notes}
+      {#await unprocessed() then notes}
         {#each notes as note}
-          <NoteEntryLoader key={[note]} bind:openNoteStack bind:selectedNotes/>
+          <NoteEntryLoader key={[note]} bind:openNoteStack bind:selectedNotes />
         {/each}
       {/await}
     </div>
@@ -66,19 +43,19 @@ lol
     {#if openNoteStack.length === 0}
       <Inspiration />
     {:else if openNoteStack.length === 1 && openNoteStack[0] === ":draft:"}
-      <Render bind:text={draft} readOnly={false}/>
+      <Render bind:text={draft} readOnly={false} />
     {:else}
-      {#await invoke<Note>("get_note", {id: openNoteStack[openNoteStack.length - 1]}) then note}
-        <Render text={note.note} readOnly/>
+      {#await getNote(openNoteStack[openNoteStack.length - 1]) then note}
+        <Render text={note.note} readOnly />
       {/await}
     {/if}
   </div>
 </main>
 
 <style>
-	:global(body) {
-		margin: 0;
-	}
+  :global(body) {
+    margin: 0;
+  }
 
   :root {
     font-family: Inter, Avenir, Helvetica, Arial, sans-serif;

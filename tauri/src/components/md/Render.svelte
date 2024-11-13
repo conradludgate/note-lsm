@@ -65,6 +65,10 @@
     editor.onDidChangeModelContent((_e) => {
       text = editor.getValue();
     });
+
+    $effect(() => {
+      editor.setValue(text);
+    })
   });
 </script>
 

@@ -10,7 +10,6 @@
 </script>
 
 <script lang="ts">
-  import type { SvelteSet } from "svelte/reactivity";
   import type { MouseEventHandler } from "svelte/elements";
   import { onMount } from "svelte";
   import DateTime from "./DateTime.svelte";
@@ -30,23 +29,25 @@
     datetime: string;
     text: string;
     openNoteStack: string[];
-    selectedNotes: SvelteSet<string>;
+    selectedNotes: string[];
   }
 
   let { key, datetime, text, openNoteStack = $bindable(), selectedNotes = $bindable() }: Props = $props();
 
   let opened = $derived(arrayEqual(openNoteStack, key));
-  let selected = $derived(key.length === 1 && selectedNotes.has(key[0]));
+  let selected = $state(false);
 
   let select: MouseEventHandler<HTMLDivElement> = $derived(e => {
     if (e.shiftKey) {
       if (key.length !== 1) return;
       let k = key[0];
 
-      if (selectedNotes.has(k)) {
-        selectedNotes.delete(k)
+      if (selected) {
+        selectedNotes = selectedNotes.filter(id => id != k);
+        selected = false;
       } else {
-        selectedNotes.add(k)
+        selectedNotes = [...selectedNotes, k];
+        selected = true;
       }
     } else {
       openNoteStack = key;
@@ -66,13 +67,19 @@
 >
   <p class="text">{text}</p>
   <div class="date"><DateTime {datetime}/></div>
+  <!-- <div class="selected-circle"></div> -->
+  {#if selected}
+    <i class="selected-circle-icon fa-regular fa-circle-check"></i>
+  {:else}
+    <i class="selected-circle-icon fa-regular fa-circle"></i>
+  {/if}
 </div>
 
 <style lang="scss">
   .inner {
     height: 3.5em;
     transition: 150ms;
-    padding: 0.8em 1.2em 0.8em 0.7em;
+    padding: 0.8em 2.4em 0.8em 0.7em;
     position: relative;
     /* margin-left: -0.825em; */
     /* border-bottom-left-radius: 0.25em; */
@@ -102,8 +109,22 @@
       bottom: 0.4em;
     }
 
+    > .selected-circle-icon {
+      display: none;
+      position: absolute;
+      right: 0.4em;
+      top: 0.4em;
+      font-size: 1.5em;
+    }
+
     // :hover is for regular click, which toggles .opened
     // :hover.shift is for shift-click, which toggles .selected
+
+    &.shift {
+      &[data-depth="1"] > .selected-circle-icon {
+        display: inline;
+      }
+    }
 
     &:hover {
       background-color: rgb(227, 227, 227);
@@ -119,9 +140,9 @@
 
     // for depth = 1, we re-enable the cursor for shift-click.
     &:hover.shift[data-depth="1"] {
-      background-color: rgb(95, 199, 140);
+      // background-color: rgb(95, 199, 140);
       /* box-shadow: inset 0.2em 0em 0.2em 0.2em rgb(194, 194, 194); */
-      border-block: solid 0.2em rgb(194, 194, 194);
+      // border-block: solid 0.2em rgb(194, 194, 194);
       cursor: pointer;
     }
 
@@ -140,19 +161,23 @@
     }
 
     &.selected {
-      background-color: rgb(95, 199, 140);
-      border-block: solid 0.2em rgb(227, 227, 227);
+      // background-color: rgb(95, 199, 140);
+      // border-block: solid 0.2em rgb(227, 227, 227);
 
       &:hover {
-        background-color: rgb(227, 227, 227);
-        border-block: solid 0.2em rgb(194, 194, 194);
+        // background-color: rgb(227, 227, 227);
+        // border-block: solid 0.2em rgb(194, 194, 194);
       }
 
       &:hover.shift[data-depth="1"] {
-        background-color: rgb(150, 189, 167);
+        // background-color: rgb(150, 189, 167);
         /* box-shadow: inset 0.2em 0em 0.2em 0.2em rgb(194, 194, 194); */
-        border-block: solid 0.2em rgb(194, 194, 194);
+        // border-block: solid 0.2em rgb(194, 194, 194);
         cursor: pointer;
+      }
+
+      .selected-circle-icon {
+        display: inline;
       }
     }
   }

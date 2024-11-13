@@ -1,25 +1,12 @@
-<script module>
-  import { invoke } from "@tauri-apps/api/core";
-  interface Note {
-    note: string;
-    datetime: string;
-    children: string[];
-  }
-
-  async function getNote(id: string): Promise<Note> {
-    return await invoke<Note>("get_note", { id });
-  }
-</script>
-
 <script lang="ts">
   import NoteEntryInner from "./NoteEntryInner.svelte";
   import NoteEntryChildren from "./NoteEntryChildren.svelte";
-  import type { SvelteSet } from "svelte/reactivity";
+  import { getNote } from "../native";
 
   interface Props {
     key: string[];
     openNoteStack: string[];
-    selectedNotes: SvelteSet<string>;
+    selectedNotes: string[];
   }
 
   let {
