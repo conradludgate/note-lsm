@@ -58,6 +58,12 @@ async fn get_note(id: RecordId, state: tauri::State<'_, Mutex<AppState>>) -> Res
     state.map.get(&id).cloned().ok_or(())
 }
 
+#[tauri::command]
+async fn add_note(note: String, children: Vec<RecordId>, state: tauri::State<'_, Mutex<AppState>>) -> Result<RecordId, ()> {
+    let mut state = state.lock().unwrap();
+    Ok(state.create_note(Note{note,datetime:Zoned::now(),children}))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut state = AppState::default();
@@ -97,7 +103,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![unprocessed, get_note])
+        .invoke_handler(tauri::generate_handler![unprocessed, get_note, add_note])
         .manage(Mutex::new(state))
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

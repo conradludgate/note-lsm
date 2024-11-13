@@ -67,7 +67,9 @@
     });
 
     $effect(() => {
-      editor.setValue(text);
+      if (text !== editor.getValue()) {
+        editor.setValue(text);
+      }
     })
   });
 </script>

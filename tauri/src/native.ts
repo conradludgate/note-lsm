@@ -13,3 +13,7 @@ export async function getNote(id: string): Promise<Note> {
 export async function unprocessed(): Promise<string[]> {
     return await invoke<string[]>("unprocessed", {})
 }
+
+export async function addNote(note: string, children: string[]): Promise<string> {
+    return await invoke<string>("add_note", { note, children })
+}
