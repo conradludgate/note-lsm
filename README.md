@@ -14,6 +14,9 @@ take a very quick note. This note should not be longer than a sentence (and as s
 Notes are append-only, so I cannot edit them either. This is to help me stay in the flow and not dwell on any mistakes.
 At a later time, I can review my notes, merging them into a larger note with the tauri-based desktop app.
 
+Since notes are append-only, I'm also utilising [atuin.sh](https://atuin.sh/)'s "generic record sync" feature as
+the database for the notes. This automatically gets me e2e encrypted backups and sync between machines.
+
 ## Example flows
 
 ### Meetings
