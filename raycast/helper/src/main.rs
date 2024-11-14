@@ -39,13 +39,29 @@ enum Output {
 async fn main() {
     let args = Args::parse();
 
-    let mut client = Client::new().await;
+    let mut settings = note_lsm_lib::Settings::new().unwrap();
+
+    settings.record_store_path = PathBuf::from(std::env::var_os("HOME").expect("$HOME not found"))
+        .join(".local")
+        .join("share")
+        .join("notelsm")
+        .join("store.db")
+        .to_str()
+        .unwrap()
+        .to_owned();
+
+    let mut client = Client::new(&settings).await;
 
     let output: Box<dyn EncodeOutput> = match args.command {
         Command::Record(record_args) => {
             println!("adding {:?}", record_args.note);
 
-            client.add_record(record_args.note, vec![], Zoned::now()).await;
+            client
+                .add_record(record_args.note, vec![], Zoned::now())
+                .await;
+            if settings.should_sync().unwrap() {
+                client.sync(&settings).await;
+            }
 
             Box::new(NoOutput {})
         }

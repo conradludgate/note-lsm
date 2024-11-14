@@ -13,6 +13,7 @@ use jiff::{
     Timestamp, Zoned,
 };
 
+pub use atuin_client::settings::Settings;
 pub use atuin_common::record::RecordId;
 
 pub struct Client {
@@ -24,14 +25,13 @@ pub struct Client {
 }
 
 impl Client {
-    pub async fn new() -> Self {
-        let settings = atuin_client::settings::Settings::new().unwrap();
+    pub async fn new(settings: &Settings) -> Self {
         let store = SqliteStore::new(&settings.record_store_path, settings.local_timeout)
             .await
             .unwrap();
 
         let host_id = atuin_client::settings::Settings::host_id().expect("failed to get host_id");
-        let key = encryption::load_key(&settings).unwrap().into();
+        let key = encryption::load_key(settings).unwrap().into();
 
         Self {
             store,
@@ -93,6 +93,10 @@ impl Client {
         *self.hosts.entry(self.host_id).or_default() = idx + 1;
 
         id
+    }
+
+    pub async fn sync(&mut self, settings: &Settings) {
+        atuin_client::record::sync::sync(settings, &self.store).await.unwrap();
     }
 
     pub async fn load_notes(

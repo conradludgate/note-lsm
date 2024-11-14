@@ -34,19 +34,19 @@
 
   let { key, datetime, text, openNoteStack = $bindable(), selectedNotes = $bindable() }: Props = $props();
 
+  let leafId = $derived(key[key.length - 1]);
   let opened = $derived(arrayEqual(openNoteStack, key));
   let selected = $state(false);
 
   let select: MouseEventHandler<HTMLDivElement> = $derived(e => {
     if (e.shiftKey) {
       if (key.length !== 1) return;
-      let k = key[0];
 
       if (selected) {
-        selectedNotes = selectedNotes.filter(id => id != k);
+        selectedNotes = selectedNotes.filter(id => id != leafId);
         selected = false;
       } else {
-        selectedNotes = [...selectedNotes, k];
+        selectedNotes = [...selectedNotes, leafId];
         selected = true;
       }
     } else {
@@ -140,9 +140,6 @@
 
     // for depth = 1, we re-enable the cursor for shift-click.
     &:hover.shift[data-depth="1"] {
-      // background-color: rgb(95, 199, 140);
-      /* box-shadow: inset 0.2em 0em 0.2em 0.2em rgb(194, 194, 194); */
-      // border-block: solid 0.2em rgb(194, 194, 194);
       cursor: pointer;
     }
 
@@ -161,21 +158,6 @@
     }
 
     &.selected {
-      // background-color: rgb(95, 199, 140);
-      // border-block: solid 0.2em rgb(227, 227, 227);
-
-      &:hover {
-        // background-color: rgb(227, 227, 227);
-        // border-block: solid 0.2em rgb(194, 194, 194);
-      }
-
-      &:hover.shift[data-depth="1"] {
-        // background-color: rgb(150, 189, 167);
-        /* box-shadow: inset 0.2em 0em 0.2em 0.2em rgb(194, 194, 194); */
-        // border-block: solid 0.2em rgb(194, 194, 194);
-        cursor: pointer;
-      }
-
       .selected-circle-icon {
         display: inline;
       }

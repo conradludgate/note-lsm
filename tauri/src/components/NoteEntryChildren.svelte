@@ -48,7 +48,7 @@
   <div transition:scale2={{ duration: 150 }} class="notestack">
     <Bar {key} />
     <div class="list">
-      {#each childrenIds as childId}
+      {#each childrenIds as childId ([...key, childId].join(":"))}
         <NoteEntryLoader
           key={[...key, childId]}
           bind:openNoteStack

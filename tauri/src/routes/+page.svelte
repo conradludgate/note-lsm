@@ -4,6 +4,7 @@
   import Bar from "../components/Bar.svelte";
   import Render from "../components/md/Render.svelte";
   import { addNote, getNote, unprocessed } from "../native";
+  import { listen } from "@tauri-apps/api/event";
 
   let draft = $state("");
   let openNoteStack = $state<string[]>([]);
@@ -17,10 +18,20 @@
   });
 
   $effect(() => {
-    unprocessed().then(n => { unprocessedNotes = n });
+    unprocessed().then((n) => {
+      unprocessedNotes = n;
+    });
+    let done = listen<string[]>("new-notes", (e) => {
+      unprocessedNotes = e.payload;
+    });
+    return () => {
+      done.then((f) => f());
+    };
   });
 
-  let editing = $derived(openNoteStack.length === 1 && openNoteStack[0] === ":draft:");
+  let editing = $derived(
+    openNoteStack.length === 1 && openNoteStack[0] === ":draft:"
+  );
 </script>
 
 <main class="container">
@@ -33,8 +44,10 @@
         <div
           class="draft-button submit"
           onclick={() => {
-            addNote(draft, selectedNotes).then(id => {
-              let unprocessedNotes2 = unprocessedNotes.filter(k => !selectedNotes.includes(k));
+            addNote(draft, selectedNotes).then((id) => {
+              let unprocessedNotes2 = unprocessedNotes.filter(
+                (k) => !selectedNotes.includes(k)
+              );
               selectedNotes = [];
               unprocessedNotes = [id, ...unprocessedNotes2];
               openNoteStack = [id];
@@ -57,7 +70,7 @@
           <span>New Note</span>
         </div>
       {/if}
-      {#each unprocessedNotes as note}
+      {#each unprocessedNotes as note (note)}
         <NoteEntryLoader key={[note]} bind:openNoteStack bind:selectedNotes />
       {/each}
     </div>
