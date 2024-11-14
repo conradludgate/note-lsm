@@ -35,9 +35,8 @@ impl AppState {
     }
 
     async fn create_note(&self, note: Note) -> RecordId {
-        let id = self
-            .client()
-            .await
+        let client = self.client().await;
+        let id = client
             .lock()
             .await
             .add_record(
@@ -46,6 +45,9 @@ impl AppState {
                 note.datetime.clone(),
             )
             .await;
+        if self.settings.should_sync().unwrap() {
+            client.lock().await.sync(&self.settings).await;
+        }
 
         self.cache.lock().unwrap().add_note(id, note);
         id
