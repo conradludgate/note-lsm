@@ -1,6 +1,7 @@
 use std::{io, path::PathBuf};
 
 use clap::Parser;
+use jiff::Zoned;
 use note_lsm_lib::Client;
 // use comfy_table::Table;
 use serde::{Deserialize, Serialize};
@@ -38,13 +39,13 @@ enum Output {
 async fn main() {
     let args = Args::parse();
 
-    let client = Client::new().await;
+    let mut client = Client::new().await;
 
     let output: Box<dyn EncodeOutput> = match args.command {
         Command::Record(record_args) => {
             println!("adding {:?}", record_args.note);
 
-            client.add_record(record_args.note, vec![]).await;
+            client.add_record(record_args.note, vec![], Zoned::now()).await;
 
             Box::new(NoOutput {})
         }

@@ -41,10 +41,7 @@ impl Client {
         }
     }
 
-    pub async fn test() -> Self {
-        let store = SqliteStore::new(":memory:", 1.0).await.unwrap();
-
-        let host_id = atuin_client::settings::Settings::host_id().expect("failed to get host_id");
+    pub fn test(store: SqliteStore, host_id: HostId) -> Self {
         let key = [0x55; 32];
 
         Self {
@@ -55,7 +52,20 @@ impl Client {
         }
     }
 
-    pub async fn add_record(&self, note: String, children: Vec<RecordId>) {
+    pub async fn add_record(
+        &mut self,
+        note: String,
+        children: Vec<RecordId>,
+        datetime: Zoned,
+    ) -> RecordId {
+        let timestamp = datetime.timestamp().duration_since(Timestamp::UNIX_EPOCH);
+        let timestamp = uuid::Timestamp::from_unix(
+            uuid::NoContext,
+            timestamp.as_secs() as u64,
+            timestamp.subsec_nanos() as u32,
+        );
+        let id = RecordId(uuid::Uuid::new_v7(timestamp));
+
         let idx = self
             .store
             .last(self.host_id, Note::TAG)
@@ -66,10 +76,11 @@ impl Client {
         let note = Note {
             note,
             children,
-            datetime: Zoned::now(),
+            datetime,
         };
 
         let record = Record::builder()
+            .id(id)
             .data(DecryptedData(note.ser_v0_to_vec()))
             .tag(Note::TAG.to_string())
             .idx(idx)
@@ -78,6 +89,10 @@ impl Client {
             .build();
         let record = record.encrypt::<PASETO_V4>(&self.key);
         self.store.push(&record).await.unwrap();
+
+        *self.hosts.entry(self.host_id).or_default() = idx + 1;
+
+        id
     }
 
     pub async fn load_notes(
@@ -379,19 +394,100 @@ fn zoned_cbor_9581_deser<E: std::fmt::Display>(
 
 #[cfg(test)]
 mod tests {
-    use atuin_common::record::RecordId;
+    use atuin_client::record::sqlite_store::SqliteStore;
+    use atuin_common::record::{HostId, RecordId};
     use hex_literal::hex;
     use jiff::{civil::datetime, tz::TimeZone};
     use uuid::uuid;
 
-    use crate::Note;
+    use crate::{Client, Note};
+
+    const HOST1: HostId = HostId(uuid!("a64b4e78-435d-45e1-a7f2-8a9d34f6074a"));
+    const HOST2: HostId = HostId(uuid!("f1ddfd0e-e3fd-47a7-9e6a-4998279546c9"));
+
+    const FOO: RecordId = RecordId(uuid!("b7d8ac79-4e91-4af8-b164-6e14212531a8"));
+    const BAR: RecordId = RecordId(uuid!("46924371-80e2-41ab-85ac-c44d9cb90d81"));
+    const BAZ: RecordId = RecordId(uuid!("3965e843-d386-424d-9c32-f5d0d4234641"));
+
+    #[tokio::test]
+    async fn round_trip() {
+        let store = SqliteStore::new(":memory:", 1.0).await.unwrap();
+
+        let dt1 = datetime(2023, 12, 19, 11, 19, 22, 0)
+            .to_zoned(TimeZone::get("Europe/Paris").unwrap())
+            .unwrap();
+        let dt2 = datetime(2024, 11, 10, 12, 19, 22, 0)
+            .to_zoned(TimeZone::get("Europe/Paris").unwrap())
+            .unwrap();
+        let dt3 = datetime(2024, 11, 9, 2, 0, 59, 0)
+            .to_zoned(TimeZone::get("Europe/London").unwrap())
+            .unwrap();
+
+        let mut client1 = Client::test(store.clone(), HOST1);
+        let mut client2 = Client::test(store.clone(), HOST2);
+
+        let id1 = client1
+            .add_record("Hello world".to_string(), vec![], dt1.clone())
+            .await;
+        let id2 = client1
+            .add_record("Goodbye world".to_string(), vec![id1], dt2.clone())
+            .await;
+        let id3 = client2
+            .add_record("Hello world again".to_string(), vec![], dt3.clone())
+            .await;
+
+        let mut loaded1 = vec![];
+        client1
+            .load_notes(|host, id, note| loaded1.push((host, id, note)))
+            .await
+            .unwrap();
+
+        let mut loaded2 = vec![];
+        client2
+            .load_notes(|host, id, note| loaded2.push((host, id, note)))
+            .await
+            .unwrap();
+
+        assert_eq!(
+            loaded1,
+            [(
+                HOST2,
+                id3,
+                Note {
+                    note: "Hello world again".to_string(),
+                    children: vec![],
+                    datetime: dt3,
+                }
+            )]
+        );
+
+        assert_eq!(
+            loaded2,
+            [
+                (
+                    HOST1,
+                    id1,
+                    Note {
+                        note: "Hello world".to_string(),
+                        children: vec![],
+                        datetime: dt1,
+                    }
+                ),
+                (
+                    HOST1,
+                    id2,
+                    Note {
+                        note: "Goodbye world".to_string(),
+                        children: vec![id1],
+                        datetime: dt2,
+                    }
+                )
+            ]
+        );
+    }
 
     #[test]
-    fn ser_deser() {
-        const FOO: RecordId = RecordId(uuid!("b7d8ac79-4e91-4af8-b164-6e14212531a8"));
-        const BAR: RecordId = RecordId(uuid!("46924371-80e2-41ab-85ac-c44d9cb90d81"));
-        const BAZ: RecordId = RecordId(uuid!("3965e843-d386-424d-9c32-f5d0d4234641"));
-
+    fn ser_deser1() {
         let note = Note {
             note: "This is my note".to_owned(),
             datetime: datetime(2024, 11, 9, 12, 19, 22, 0)

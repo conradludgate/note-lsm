@@ -2682,6 +2682,7 @@ dependencies = [
  "clap",
  "comfy-table",
  "eyre",
+ "jiff",
  "note-lsm-lib",
  "serde",
  "serde_json",
@@ -2715,6 +2716,7 @@ dependencies = [
  "eyre",
  "hex-literal",
  "jiff",
+ "tokio",
  "uuid",
 ]
 
