@@ -74,7 +74,7 @@
         <NoteEntryLoader
           key={note}
           {openNoteStack}
-          openNote={(stack) => {
+          open={(stack) => {
             openNoteStack = [note, ...stack];
           }}
           selected={selectedNotes.includes(note)}

@@ -5,14 +5,14 @@
 
   interface Props {
     parentKey: string;
-    childrenIds: string[];
+    children: string[];
     openNoteStack: string[];
-    openNote: (stack: string[]) => void;
+    open: (stack: string[]) => void;
   }
 
-  let { parentKey, childrenIds, openNoteStack, openNote }: Props = $props();
+  let { parentKey, children, openNoteStack, open }: Props = $props();
 
-  let sortedIds = $derived([...childrenIds].sort().reverse());
+  let sortedIds = $derived([...children].sort().reverse());
   let isParentSelected = $derived(openNoteStack[0] === parentKey);
 
   export function scale2(
@@ -44,7 +44,7 @@
         <NoteEntryLoader
           {key}
           openNoteStack={openNoteStack.slice(1)}
-          openNote={(stack) => openNote([key, ...stack])}
+          open={(stack) => open([key, ...stack])}
           select={() => {}}
         />
       {/each}

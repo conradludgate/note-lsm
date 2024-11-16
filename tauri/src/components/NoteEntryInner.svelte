@@ -5,10 +5,6 @@
   const shiftHandler = (e: KeyboardEvent) => {
     shift = e.shiftKey;
   };
-
-  function arrayEqual(a: string[], b: string[]): boolean {
-    return a.length === b.length && a.every((el, ix) => el === b[ix]);
-  }
 </script>
 
 <script lang="ts">
@@ -27,32 +23,22 @@
   });
 
   interface Props {
-    key: string;
     datetime: string;
     text: string;
-    openNoteStack: string[];
-    openNote: (stack: string[]) => void;
+    opened: boolean;
     selected?: boolean;
+
+    open: (stack: string[]) => void;
     select: () => void;
   }
 
-  let {
-    key,
-    datetime,
-    text,
-    openNoteStack,
-    openNote,
-    selected,
-    select,
-  }: Props = $props();
-
-  let opened = $derived(arrayEqual(openNoteStack, [key]));
+  let { datetime, text, opened, open, selected, select }: Props = $props();
 
   let onclick: MouseEventHandler<HTMLDivElement> = $derived((e) => {
     if (e.shiftKey) {
       select();
     } else {
-      openNote([]);
+      open([]);
     }
   });
 </script>

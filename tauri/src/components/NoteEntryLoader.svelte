@@ -6,30 +6,18 @@
   interface Props {
     key: string;
     openNoteStack: string[];
-    openNote: (stack: string[]) => void;
+    open: (stack: string[]) => void;
     selected?: boolean;
     select: () => void;
   }
 
-  let { key, openNoteStack, openNote, selected, select }: Props = $props();
+  let { key, openNoteStack, open, selected, select }: Props = $props();
+  let opened = $derived(openNoteStack.length === 1 && openNoteStack[0] === key);
 </script>
 
 {#snippet entry(text: string, datetime: string, children: string[])}
-  <NoteEntryInner
-    {key}
-    {datetime}
-    {text}
-    {openNoteStack}
-    {openNote}
-    {selected}
-    {select}
-  />
-  <NoteEntryChildren
-    parentKey={key}
-    childrenIds={children}
-    {openNoteStack}
-    {openNote}
-  />
+  <NoteEntryInner {datetime} {text} {opened} {open} {selected} {select} />
+  <NoteEntryChildren parentKey={key} {children} {openNoteStack} {open} />
 {/snippet}
 
 <div class="entry">
