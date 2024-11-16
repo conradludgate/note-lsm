@@ -1,4 +1,4 @@
-<script module>
+<script module lang="ts">
   let keyHandlerSetup = $state(false);
   let shift = $state(false);
 
@@ -10,7 +10,8 @@
 <script lang="ts">
   import type { MouseEventHandler } from "svelte/elements";
   import { onMount } from "svelte";
-  import DateTime from "./DateTime.svelte";
+  import type { Temporal } from "@js-temporal/polyfill";
+  import { formatTime } from "../time";
 
   onMount(() => {
     $effect(() => {
@@ -23,22 +24,24 @@
   });
 
   interface Props {
-    datetime: string;
+    currentTime: Temporal.ZonedDateTime;
+    datetime?: Temporal.ZonedDateTime;
     text: string;
     opened: boolean;
     selected?: boolean;
 
-    open: (stack: string[]) => void;
+    open: () => void;
     select: () => void;
   }
 
-  let { datetime, text, opened, open, selected, select }: Props = $props();
+  let { currentTime, datetime, text, opened, open, selected, select }: Props =
+    $props();
 
   let onclick: MouseEventHandler<HTMLDivElement> = $derived((e) => {
     if (e.shiftKey) {
       select();
     } else {
-      open([]);
+      open();
     }
   });
 </script>
@@ -54,8 +57,9 @@
   {onclick}
 >
   <p class="text">{text}</p>
-  <div class="date"><DateTime {datetime} /></div>
-  <!-- <div class="selected-circle"></div> -->
+  <span class="date">
+    {#if datetime !== undefined}{formatTime(datetime, currentTime)}{/if}
+  </span>
   {#if selected}
     <i class="selected-circle-icon fa-regular fa-circle-check"></i>
   {:else}

@@ -1,3 +1,12 @@
+<script module>
+  import { Temporal } from "@js-temporal/polyfill";
+
+  let currentTime = $state(Temporal.Now.zonedDateTimeISO().round("second"));
+  const id = setInterval(() => {
+    currentTime = Temporal.Now.zonedDateTimeISO().round("second");
+  }, 1000);
+</script>
+
 <script lang="ts">
   import Inspiration from "../components/Inspiration.svelte";
   import NoteEntryLoader from "../components/NoteEntryLoader.svelte";
@@ -10,6 +19,7 @@
   let openNoteStack = $state<string[]>([]);
   let selectedNotes = $state<string[]>([]);
   let unprocessedNotes = $state<string[]>([]);
+  $inspect({ now: currentTime });
 
   $effect(() => {
     Promise.all(selectedNotes.map((id) => getNote(id))).then((notes) => {
@@ -72,6 +82,7 @@
       {/if}
       {#each unprocessedNotes as note (note)}
         <NoteEntryLoader
+          {currentTime}
           key={note}
           {openNoteStack}
           open={(stack) => {

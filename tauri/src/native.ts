@@ -1,13 +1,23 @@
+import { Temporal } from "@js-temporal/polyfill";
 import { invoke } from "@tauri-apps/api/core";
 
-interface Note {
+interface NoteInner {
     note: string;
     datetime: string;
     children: string[];
 }
 
+export interface Note {
+    note: string;
+    datetime: Temporal.ZonedDateTime;
+    children: string[];
+}
+
 export async function getNote(id: string): Promise<Note> {
-    return await invoke<Note>("get_note", { id });
+    let { note, datetime, children } = await invoke<NoteInner>("get_note", { id });
+    return {
+        note, children, datetime: Temporal.ZonedDateTime.from(datetime),
+    };
 }
 
 export async function unprocessed(): Promise<string[]> {

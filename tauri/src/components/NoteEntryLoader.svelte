@@ -2,8 +2,10 @@
   import NoteEntryInner from "./NoteEntryInner.svelte";
   import NoteEntryChildren from "./NoteEntryChildren.svelte";
   import { getNote } from "../native";
+  import type { Temporal } from "@js-temporal/polyfill";
 
   interface Props {
+    currentTime: Temporal.ZonedDateTime;
     key: string;
     openNoteStack: string[];
     open: (stack: string[]) => void;
@@ -11,18 +13,37 @@
     select: () => void;
   }
 
-  let { key, openNoteStack, open, selected, select }: Props = $props();
+  let { currentTime, key, openNoteStack, open, selected, select }: Props =
+    $props();
   let opened = $derived(openNoteStack.length === 1 && openNoteStack[0] === key);
 </script>
 
-{#snippet entry(text: string, datetime: string, children: string[])}
-  <NoteEntryInner {datetime} {text} {opened} {open} {selected} {select} />
-  <NoteEntryChildren parentKey={key} {children} {openNoteStack} {open} />
+{#snippet entry(
+  text: string,
+  datetime: Temporal.ZonedDateTime | undefined,
+  children: string[]
+)}
+  <NoteEntryInner
+    {currentTime}
+    {datetime}
+    {text}
+    {opened}
+    open={() => open([])}
+    {selected}
+    {select}
+  />
+  <NoteEntryChildren
+    {currentTime}
+    parentKey={key}
+    {children}
+    {openNoteStack}
+    {open}
+  />
 {/snippet}
 
 <div class="entry">
   {#await getNote(key)}
-    {@render entry("", "", [])}
+    {@render entry("", undefined, [])}
   {:then note}
     {@render entry(note.note, note.datetime, note.children)}
   {/await}

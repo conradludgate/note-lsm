@@ -2,15 +2,18 @@
   import type { TransitionConfig } from "svelte/transition";
   import NoteEntryLoader from "./NoteEntryLoader.svelte";
   import Bar from "./Bar.svelte";
+  import type { Temporal } from "@js-temporal/polyfill";
 
   interface Props {
+    currentTime: Temporal.ZonedDateTime;
     parentKey: string;
     children: string[];
     openNoteStack: string[];
     open: (stack: string[]) => void;
   }
 
-  let { parentKey, children, openNoteStack, open }: Props = $props();
+  let { currentTime, parentKey, children, openNoteStack, open }: Props =
+    $props();
 
   let sortedIds = $derived([...children].sort().reverse());
   let isParentSelected = $derived(openNoteStack[0] === parentKey);
@@ -42,6 +45,7 @@
     <div class="list">
       {#each sortedIds as key (key)}
         <NoteEntryLoader
+          {currentTime}
           {key}
           openNoteStack={openNoteStack.slice(1)}
           open={(stack) => open([key, ...stack])}
