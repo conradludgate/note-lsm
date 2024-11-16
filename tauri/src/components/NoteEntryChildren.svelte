@@ -9,7 +9,7 @@
     noteDepth: number;
     openNoteStack: string[];
     openNote: (stack: string[]) => void;
-    selectedNotes: string[];
+    select: (key: string, toggle: boolean) => void;
   }
 
   let {
@@ -18,7 +18,7 @@
     noteDepth,
     openNoteStack,
     openNote,
-    selectedNotes = $bindable(),
+    select,
   }: Props = $props();
 
   let isParentSelected = $derived(openNoteStack[0] === parentKey);
@@ -54,7 +54,7 @@
           noteDepth={noteDepth + 1}
           openNoteStack={openNoteStack.slice(1)}
           openNote={(stack) => openNote([parentKey, ...stack])}
-          bind:selectedNotes
+          {select}
         />
       {/each}
     </div>

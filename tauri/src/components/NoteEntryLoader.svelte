@@ -8,16 +8,10 @@
     noteDepth: number;
     openNoteStack: string[];
     openNote: (stack: string[]) => void;
-    selectedNotes: string[];
+    select: (key: string, toggle: boolean) => void;
   }
 
-  let {
-    key,
-    noteDepth,
-    openNoteStack,
-    openNote,
-    selectedNotes = $bindable(),
-  }: Props = $props();
+  let { key, noteDepth, openNoteStack, openNote, select }: Props = $props();
 </script>
 
 {#snippet entry(text: string, datetime: string, children: string[])}
@@ -28,7 +22,7 @@
     {noteDepth}
     {openNoteStack}
     {openNote}
-    bind:selectedNotes
+    {select}
   />
   <NoteEntryChildren
     parentKey={key}
@@ -36,7 +30,7 @@
     {noteDepth}
     {openNoteStack}
     {openNote}
-    bind:selectedNotes
+    select={(_key: string, _toggle: boolean) => {}}
   />
 {/snippet}
 

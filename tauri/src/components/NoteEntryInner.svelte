@@ -33,7 +33,7 @@
     noteDepth: number;
     openNoteStack: string[];
     openNote: (stack: string[]) => void;
-    selectedNotes: string[];
+    select: (key: string, toggle: boolean) => void;
   }
 
   let {
@@ -43,22 +43,17 @@
     noteDepth,
     openNoteStack,
     openNote,
-    selectedNotes = $bindable(),
+    select,
   }: Props = $props();
 
   let opened = $derived(arrayEqual(openNoteStack, [key]));
   let selected = $state(false);
 
-  let select: MouseEventHandler<HTMLDivElement> = $derived((e) => {
+  let onclick: MouseEventHandler<HTMLDivElement> = $derived((e) => {
     if (e.shiftKey) {
-      if (noteDepth > 0) return;
-
-      if (selected) {
-        selectedNotes = selectedNotes.filter((id) => id != key);
-        selected = false;
-      } else {
-        selectedNotes = [...selectedNotes, key];
-        selected = true;
+      if (noteDepth == 0) {
+        selected = !selected;
+        select(key, selected);
       }
     } else {
       openNote([key]);
@@ -74,7 +69,7 @@
   class:selected
   class:shift
   data-depth={noteDepth}
-  onclick={select}
+  {onclick}
 >
   <p class="text">{text}</p>
   <div class="date"><DateTime {datetime} /></div>

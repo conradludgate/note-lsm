@@ -78,7 +78,13 @@
           openNote={(stack) => {
             openNoteStack = stack;
           }}
-          bind:selectedNotes
+          select={(key: string, toggle: boolean) => {
+            if (toggle) {
+              selectedNotes = [...selectedNotes, key];
+            } else {
+              selectedNotes = selectedNotes.filter((id) => id != key);
+            }
+          }}
         />
       {/each}
     </div>
