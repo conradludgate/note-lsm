@@ -36,7 +36,7 @@
 
 <main class="container">
   <div class="notestack">
-    <Bar key={[]} />
+    <Bar key={""} />
     <div class="list">
       {#if editing}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -71,7 +71,15 @@
         </div>
       {/if}
       {#each unprocessedNotes as note (note)}
-        <NoteEntryLoader key={[note]} bind:openNoteStack bind:selectedNotes />
+        <NoteEntryLoader
+          key={note}
+          noteDepth={0}
+          {openNoteStack}
+          openNote={(stack) => {
+            openNoteStack = stack;
+          }}
+          bind:selectedNotes
+        />
       {/each}
     </div>
   </div>

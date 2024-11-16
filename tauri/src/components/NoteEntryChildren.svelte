@@ -4,24 +4,24 @@
   import Bar from "./Bar.svelte";
 
   interface Props {
-    key: string[];
+    parentKey: string;
     childrenIds: string[];
+    noteDepth: number;
     openNoteStack: string[];
+    openNote: (stack: string[]) => void;
     selectedNotes: string[];
   }
 
   let {
-    key,
+    parentKey,
     childrenIds,
-    openNoteStack = $bindable(),
+    noteDepth,
+    openNoteStack,
+    openNote,
     selectedNotes = $bindable(),
   }: Props = $props();
 
-  let isParentSelected = $derived(arrayHashPrefix(openNoteStack, key));
-
-  function arrayHashPrefix(a: string[], prefix: string[]): boolean {
-    return prefix.length <= a.length && prefix.every((el, ix) => el === a[ix]);
-  }
+  let isParentSelected = $derived(openNoteStack[0] === parentKey);
 
   export function scale2(
     node: Element,
@@ -46,12 +46,14 @@
 
 {#if isParentSelected && childrenIds.length > 0}
   <div transition:scale2={{ duration: 150 }} class="notestack">
-    <Bar {key} />
+    <Bar key={parentKey} />
     <div class="list">
-      {#each childrenIds as childId ([...key, childId].join(":"))}
+      {#each childrenIds as key (key)}
         <NoteEntryLoader
-          key={[...key, childId]}
-          bind:openNoteStack
+          {key}
+          noteDepth={noteDepth + 1}
+          openNoteStack={openNoteStack.slice(1)}
+          openNote={(stack) => openNote([parentKey, ...stack])}
           bind:selectedNotes
         />
       {/each}

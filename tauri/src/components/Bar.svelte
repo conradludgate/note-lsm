@@ -2,7 +2,7 @@
   import { keyColor } from "../hash";
 
   interface Props {
-    key: string[];
+    key: string;
   }
 
   let { key }: Props = $props();

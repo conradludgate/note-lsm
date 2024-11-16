@@ -2,7 +2,9 @@
   let keyHandlerSetup = $state(false);
   let shift = $state(false);
 
-  const shiftHandler = (e: KeyboardEvent) => { shift = e.shiftKey };
+  const shiftHandler = (e: KeyboardEvent) => {
+    shift = e.shiftKey;
+  };
 
   function arrayEqual(a: string[], b: string[]): boolean {
     return a.length === b.length && a.every((el, ix) => el === b[ix]);
@@ -18,39 +20,48 @@
     $effect(() => {
       if (!keyHandlerSetup) {
         keyHandlerSetup = true;
-        window.addEventListener("keydown", shiftHandler,false);
-        window.addEventListener("keyup",  shiftHandler ,false);
+        window.addEventListener("keydown", shiftHandler, false);
+        window.addEventListener("keyup", shiftHandler, false);
       }
-    })
-  })
+    });
+  });
 
   interface Props {
-    key: string[];
+    key: string;
     datetime: string;
     text: string;
+    noteDepth: number;
     openNoteStack: string[];
+    openNote: (stack: string[]) => void;
     selectedNotes: string[];
   }
 
-  let { key, datetime, text, openNoteStack = $bindable(), selectedNotes = $bindable() }: Props = $props();
+  let {
+    key,
+    datetime,
+    text,
+    noteDepth,
+    openNoteStack,
+    openNote,
+    selectedNotes = $bindable(),
+  }: Props = $props();
 
-  let leafId = $derived(key[key.length - 1]);
-  let opened = $derived(arrayEqual(openNoteStack, key));
+  let opened = $derived(arrayEqual(openNoteStack, [key]));
   let selected = $state(false);
 
-  let select: MouseEventHandler<HTMLDivElement> = $derived(e => {
+  let select: MouseEventHandler<HTMLDivElement> = $derived((e) => {
     if (e.shiftKey) {
-      if (key.length !== 1) return;
+      if (noteDepth > 0) return;
 
       if (selected) {
-        selectedNotes = selectedNotes.filter(id => id != leafId);
+        selectedNotes = selectedNotes.filter((id) => id != key);
         selected = false;
       } else {
-        selectedNotes = [...selectedNotes, leafId];
+        selectedNotes = [...selectedNotes, key];
         selected = true;
       }
     } else {
-      openNoteStack = key;
+      openNote([key]);
     }
   });
 </script>
@@ -59,14 +70,14 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="inner"
-  class:opened={opened}
-  class:selected={selected}
-  class:shift={shift}
-  data-depth={key.length}
+  class:opened
+  class:selected
+  class:shift
+  data-depth={noteDepth}
   onclick={select}
 >
   <p class="text">{text}</p>
-  <div class="date"><DateTime {datetime}/></div>
+  <div class="date"><DateTime {datetime} /></div>
   <!-- <div class="selected-circle"></div> -->
   {#if selected}
     <i class="selected-circle-icon fa-regular fa-circle-check"></i>
@@ -121,7 +132,7 @@
     // :hover.shift is for shift-click, which toggles .selected
 
     &.shift {
-      &[data-depth="1"] > .selected-circle-icon {
+      &[data-depth="0"] > .selected-circle-icon {
         display: inline;
       }
     }
@@ -135,11 +146,11 @@
     &:hover.shift {
       background-color: #f6f6f6;
       border-block: solid 0.2em #f6f6f6;
-      cursor:not-allowed;
+      cursor: not-allowed;
     }
 
     // for depth = 1, we re-enable the cursor for shift-click.
-    &:hover.shift[data-depth="1"] {
+    &:hover.shift[data-depth="0"] {
       cursor: pointer;
     }
 
@@ -151,7 +162,7 @@
         background-color: rgb(238, 238, 238);
       }
 
-      &:hover.shift[data-depth="1"] {
+      &:hover.shift[data-depth="0"] {
         background-color: rgb(227, 227, 227);
         border-block: solid 0.2em rgb(227, 227, 227);
       }

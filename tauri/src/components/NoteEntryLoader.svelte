@@ -4,14 +4,18 @@
   import { getNote } from "../native";
 
   interface Props {
-    key: string[];
+    key: string;
+    noteDepth: number;
     openNoteStack: string[];
+    openNote: (stack: string[]) => void;
     selectedNotes: string[];
   }
 
   let {
     key,
-    openNoteStack = $bindable(),
+    noteDepth,
+    openNoteStack,
+    openNote,
     selectedNotes = $bindable(),
   }: Props = $props();
 </script>
@@ -19,21 +23,25 @@
 {#snippet entry(text: string, datetime: string, children: string[])}
   <NoteEntryInner
     {key}
-    datetime={datetime}
-    text={text}
-    bind:openNoteStack
+    {datetime}
+    {text}
+    {noteDepth}
+    {openNoteStack}
+    {openNote}
     bind:selectedNotes
   />
   <NoteEntryChildren
-    {key}
+    parentKey={key}
     childrenIds={children}
-    bind:openNoteStack
+    {noteDepth}
+    {openNoteStack}
+    {openNote}
     bind:selectedNotes
   />
 {/snippet}
 
 <div class="entry">
-  {#await getNote(key[key.length - 1])}
+  {#await getNote(key)}
     {@render entry("", "", [])}
   {:then note}
     {@render entry(note.note, note.datetime, note.children)}
