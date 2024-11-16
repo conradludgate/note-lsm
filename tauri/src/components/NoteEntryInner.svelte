@@ -30,33 +30,29 @@
     key: string;
     datetime: string;
     text: string;
-    noteDepth: number;
     openNoteStack: string[];
     openNote: (stack: string[]) => void;
-    select: (key: string, toggle: boolean) => void;
+    selected?: boolean;
+    select: () => void;
   }
 
   let {
     key,
     datetime,
     text,
-    noteDepth,
     openNoteStack,
     openNote,
+    selected,
     select,
   }: Props = $props();
 
   let opened = $derived(arrayEqual(openNoteStack, [key]));
-  let selected = $state(false);
 
   let onclick: MouseEventHandler<HTMLDivElement> = $derived((e) => {
     if (e.shiftKey) {
-      if (noteDepth == 0) {
-        selected = !selected;
-        select(key, selected);
-      }
+      select();
     } else {
-      openNote([key]);
+      openNote([]);
     }
   });
 </script>
@@ -68,7 +64,7 @@
   class:opened
   class:selected
   class:shift
-  data-depth={noteDepth}
+  data-selectable={selected !== undefined}
   {onclick}
 >
   <p class="text">{text}</p>
@@ -127,7 +123,7 @@
     // :hover.shift is for shift-click, which toggles .selected
 
     &.shift {
-      &[data-depth="0"] > .selected-circle-icon {
+      &[data-selectable="true"] > .selected-circle-icon {
         display: inline;
       }
     }
@@ -137,15 +133,15 @@
       border-block: solid 0.2em rgb(194, 194, 194);
     }
 
-    // for depth != 1, disable the cursor for shift-click.
+    // for non selectable, disable the cursor for shift-click.
     &:hover.shift {
       background-color: #f6f6f6;
       border-block: solid 0.2em #f6f6f6;
       cursor: not-allowed;
     }
 
-    // for depth = 1, we re-enable the cursor for shift-click.
-    &:hover.shift[data-depth="0"] {
+    // for selectable, we re-enable the cursor for shift-click.
+    &:hover.shift[data-selectable="true"] {
       cursor: pointer;
     }
 
@@ -157,7 +153,7 @@
         background-color: rgb(238, 238, 238);
       }
 
-      &:hover.shift[data-depth="0"] {
+      &:hover.shift[data-selectable="true"] {
         background-color: rgb(227, 227, 227);
         border-block: solid 0.2em rgb(227, 227, 227);
       }

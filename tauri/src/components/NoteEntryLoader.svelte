@@ -5,13 +5,13 @@
 
   interface Props {
     key: string;
-    noteDepth: number;
     openNoteStack: string[];
     openNote: (stack: string[]) => void;
-    select: (key: string, toggle: boolean) => void;
+    selected?: boolean;
+    select: () => void;
   }
 
-  let { key, noteDepth, openNoteStack, openNote, select }: Props = $props();
+  let { key, openNoteStack, openNote, selected, select }: Props = $props();
 </script>
 
 {#snippet entry(text: string, datetime: string, children: string[])}
@@ -19,18 +19,16 @@
     {key}
     {datetime}
     {text}
-    {noteDepth}
     {openNoteStack}
     {openNote}
+    {selected}
     {select}
   />
   <NoteEntryChildren
     parentKey={key}
     childrenIds={children}
-    {noteDepth}
     {openNoteStack}
     {openNote}
-    select={(_key: string, _toggle: boolean) => {}}
   />
 {/snippet}
 

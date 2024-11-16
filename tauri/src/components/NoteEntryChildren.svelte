@@ -6,21 +6,13 @@
   interface Props {
     parentKey: string;
     childrenIds: string[];
-    noteDepth: number;
     openNoteStack: string[];
     openNote: (stack: string[]) => void;
-    select: (key: string, toggle: boolean) => void;
   }
 
-  let {
-    parentKey,
-    childrenIds,
-    noteDepth,
-    openNoteStack,
-    openNote,
-    select,
-  }: Props = $props();
+  let { parentKey, childrenIds, openNoteStack, openNote }: Props = $props();
 
+  let sortedIds = $derived([...childrenIds].sort().reverse());
   let isParentSelected = $derived(openNoteStack[0] === parentKey);
 
   export function scale2(
@@ -44,17 +36,16 @@
   }
 </script>
 
-{#if isParentSelected && childrenIds.length > 0}
+{#if isParentSelected && sortedIds.length > 0}
   <div transition:scale2={{ duration: 150 }} class="notestack">
     <Bar key={parentKey} />
     <div class="list">
-      {#each childrenIds as key (key)}
+      {#each sortedIds as key (key)}
         <NoteEntryLoader
           {key}
-          noteDepth={noteDepth + 1}
           openNoteStack={openNoteStack.slice(1)}
-          openNote={(stack) => openNote([parentKey, ...stack])}
-          {select}
+          openNote={(stack) => openNote([key, ...stack])}
+          select={() => {}}
         />
       {/each}
     </div>

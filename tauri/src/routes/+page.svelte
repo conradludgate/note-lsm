@@ -73,16 +73,17 @@
       {#each unprocessedNotes as note (note)}
         <NoteEntryLoader
           key={note}
-          noteDepth={0}
           {openNoteStack}
           openNote={(stack) => {
-            openNoteStack = stack;
+            openNoteStack = [note, ...stack];
           }}
-          select={(key: string, toggle: boolean) => {
-            if (toggle) {
-              selectedNotes = [...selectedNotes, key];
+          selected={selectedNotes.includes(note)}
+          select={() => {
+            let selected = selectedNotes.includes(note);
+            if (selected) {
+              selectedNotes = selectedNotes.filter((id) => id != note);
             } else {
-              selectedNotes = selectedNotes.filter((id) => id != key);
+              selectedNotes = [...selectedNotes, note];
             }
           }}
         />
